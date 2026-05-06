@@ -1,0 +1,122 @@
+import sys
+import os
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox
+)
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QIcon
+
+from src.ui.audio_converter import AudioConverter
+from src.ui.video_converter import VideoConverter
+from src.ui.images_converter import ImageConverter
+from src.ui.ui_theme import (
+    APP_COLORS,
+    SOFT_BUTTON_STYLE,
+    apply_window_theme,
+    make_card_container,
+)
+
+
+class LauncherWindow(QWidget):
+    """Pantalla de inicio que permite elegir el tipo de conversión."""
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Elige tu tipo de conversión")
+        self.setGeometry(200, 200, 360, 220)
+        apply_window_theme(self)
+        self.init_ui()
+
+    def init_ui(self):
+        self.setGeometry(160, 120, 900, 640)
+
+        root_layout = QVBoxLayout()
+        root_layout.setContentsMargins(28, 24, 28, 24)
+        root_layout.setSpacing(0)
+        main_card, layout = make_card_container()
+
+        title = QLabel("Elige tu tipo de conversión")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet(f"font-size: 22pt; font-weight: 700; color: {APP_COLORS['text_main']}; margin-bottom: 8px;")
+        layout.addWidget(title)
+
+        icons_layout = QHBoxLayout()
+        icons_layout.setSpacing(40)
+
+        def make_block(icon_filename, label_text, handler):
+            v = QVBoxLayout()
+            btn = QPushButton()
+            icon_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'icons', icon_filename)
+            )
+            if os.path.exists(icon_path):
+                btn.setIcon(QIcon(icon_path))
+            btn.setIconSize(QSize(180, 180))
+            btn.setFixedSize(200, 200)
+            btn.setStyleSheet(
+                f"QPushButton{{background:#FFFFFF;border-radius:20px;border:1px solid {APP_COLORS['border']};}}"
+                "QPushButton:hover{background:#F8F4F1}"
+            )
+            btn.clicked.connect(handler)
+            lbl = QLabel(label_text)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setStyleSheet(f"color: {APP_COLORS['text_muted']}; font-weight:600; margin-top:8px;")
+            v.addWidget(btn, alignment=Qt.AlignmentFlag.AlignCenter)
+            v.addWidget(lbl)
+            return v
+
+        icons_layout.addLayout(make_block('ImagenIcon.png', 'Imagen', self.open_image_converter))
+        icons_layout.addLayout(make_block('AudioIcon.png', 'Audio', self.open_audio_converter))
+        icons_layout.addLayout(make_block('VideoIcon.png', 'Video', self.open_video_converter))
+
+        layout.addLayout(icons_layout)
+
+        footer = QHBoxLayout()
+        footer.addStretch()
+        exit_btn = QPushButton("Salir")
+        exit_btn.setFixedWidth(120)
+        exit_btn.clicked.connect(self.close)
+        exit_btn.setStyleSheet(SOFT_BUTTON_STYLE)
+        footer.addWidget(exit_btn)
+        footer.addStretch()
+
+        layout.addStretch()
+        layout.addLayout(footer)
+
+        root_layout.addWidget(main_card)
+        self.setLayout(root_layout)
+
+        self.image_window = None
+        self.audio_window = None
+        self.video_window = None
+
+    def open_image_converter(self):
+        try:
+            self.image_window = ImageConverter()
+            self.image_window.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo abrir el conversor de imágenes:\n{e}")
+
+    def open_audio_converter(self):
+        try:
+            self.audio_window = AudioConverter()
+            self.audio_window.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo abrir el conversor de audio:\n{e}")
+
+    def open_video_converter(self):
+        try:
+            self.video_window = VideoConverter()
+            self.video_window.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo abrir el conversor de video:\n{e}")
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = LauncherWindow()
+    window.show()
+    sys.exit(app.exec())
