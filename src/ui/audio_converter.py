@@ -228,10 +228,16 @@ class AudioConverter(QWidget):
         self.to_combo.clear()
         self.to_combo.addItems(AUDIO_FORMATS)
 
+    def choose_output_folder(self):
+        return QFileDialog.getExistingDirectory(self, "Seleccionar carpeta de salida")
+
     def convert_file(self):
+        output_dir = self.choose_output_folder()
+        if not output_dir:
+            return
+
         if self.batch_files:
             to_format = self.to_combo.currentText()
-            os.makedirs("destino", exist_ok=True)
             converted = 0
             skipped = 0
             failed = 0
@@ -253,7 +259,7 @@ class AudioConverter(QWidget):
                         skipped += 1
                     else:
                         base = os.path.splitext(os.path.basename(source))[0]
-                        destino_path = os.path.join("destino", f"{base}.{to_format}")
+                        destino_path = os.path.join(output_dir, f"{base}.{to_format}")
                         result = Conversion.AudioFormats.convertir(source, destino_path, formato_destino=to_format)
                         if str(result).startswith("✅"):
                             converted += 1
@@ -271,12 +277,11 @@ class AudioConverter(QWidget):
                 "Conversión masiva",
                 f"Convertidos: {converted}\nOmitidos (mismo formato): {skipped}\nFallidos: {failed}",
             )
-            carpeta_destino = os.path.abspath("destino")
             try:
-                os.startfile(carpeta_destino)
+                os.startfile(output_dir)
             except Exception:
                 try:
-                    subprocess.Popen(["xdg-open", carpeta_destino])
+                    subprocess.Popen(["xdg-open", output_dir])
                 except Exception:
                     pass
             return
@@ -290,7 +295,7 @@ class AudioConverter(QWidget):
             QMessageBox.warning(self, "Advertencia", "El formato de origen y destino no pueden ser iguales.")
             return
         base = os.path.splitext(os.path.basename(self.file_path))[0]
-        destino_path = os.path.join("destino", f"{base}.{to_format}")
+        destino_path = os.path.join(output_dir, f"{base}.{to_format}")
 
         progress = QProgressDialog("Convirtiendo audio...", None, 0, 0, self)
         progress.setWindowTitle("Procesando")
@@ -309,12 +314,11 @@ class AudioConverter(QWidget):
         else:
             QMessageBox.critical(self, "Error", resultado)
 
-        carpeta_destino = os.path.abspath("destino")
         try:
-            os.startfile(carpeta_destino)
+            os.startfile(output_dir)
         except Exception:
             try:
-                subprocess.Popen(['xdg-open', carpeta_destino])
+                subprocess.Popen(['xdg-open', output_dir])
             except Exception:
                 pass
 

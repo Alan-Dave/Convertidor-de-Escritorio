@@ -225,10 +225,16 @@ class ImageConverter(QWidget):
         self.to_combo.clear()
         self.to_combo.addItems(IMAGE_FORMATS)
 
+    def choose_output_folder(self):
+        return QFileDialog.getExistingDirectory(self, "Seleccionar carpeta de salida")
+
     def convert_image(self):
+        output_dir = self.choose_output_folder()
+        if not output_dir:
+            return
+
         if self.batch_files:
             to_format = self.to_combo.currentText()
-            os.makedirs("destino", exist_ok=True)
             converted = 0
             skipped = 0
             failed = 0
@@ -254,7 +260,7 @@ class ImageConverter(QWidget):
                             failed += 1
                         else:
                             nombre = os.path.splitext(os.path.basename(file_path))[0]
-                            ruta_destino = os.path.join("destino", f"{nombre}.{to_format}")
+                            ruta_destino = os.path.join(output_dir, f"{nombre}.{to_format}")
                             result = func(file_path, ruta_destino)
                             if str(result).startswith("✅"):
                                 converted += 1
@@ -271,11 +277,10 @@ class ImageConverter(QWidget):
                 "Conversión masiva",
                 f"Convertidos: {converted}\nOmitidos (mismo formato): {skipped}\nFallidos: {failed}",
             )
-            carpeta_destino = os.path.abspath("destino")
             try:
-                os.startfile(carpeta_destino)
+                os.startfile(output_dir)
             except AttributeError:
-                subprocess.Popen(["xdg-open", carpeta_destino])
+                subprocess.Popen(["xdg-open", output_dir])
             return
 
         if not self.image_path:
@@ -293,8 +298,7 @@ class ImageConverter(QWidget):
             return
 
         nombre = os.path.splitext(os.path.basename(self.image_path))[0]
-        ruta_destino = os.path.join("destino", f"{nombre}.{to_format}")
-        os.makedirs("destino", exist_ok=True)
+        ruta_destino = os.path.join(output_dir, f"{nombre}.{to_format}")
 
         progress = QProgressDialog("Convirtiendo imagen...", None, 0, 0, self)
         progress.setWindowTitle("Procesando")
@@ -308,11 +312,10 @@ class ImageConverter(QWidget):
             progress.close()
 
         QMessageBox.information(self, "Conversión", resultado)
-        carpeta_destino = os.path.abspath("destino")
         try:
-            os.startfile(carpeta_destino)
+            os.startfile(output_dir)
         except AttributeError:
-            subprocess.Popen(['xdg-open', carpeta_destino])
+            subprocess.Popen(['xdg-open', output_dir])
 
 
 if __name__ == "__main__":
