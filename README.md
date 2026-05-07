@@ -1,40 +1,40 @@
-# Convertidor Multimedia (PyQt6)
-<<<<<<< HEAD
+# Media Hub (Versión 2.0)
 
-Aplicación de escritorio hecha en Python para convertir **imágenes**, **audio** y **video** sin depender de páginas con anuncios.
+Aplicación de escritorio modular hecha en Python (PyQt6) para agrupar múltiples herramientas de conversión y edición impulsadas por Inteligencia Artificial, sin depender de páginas con anuncios.
 
-Incluye interfaz gráfica con drag & drop, selección de archivo/carpeta, validación por tipo de archivo y barra de progreso durante la conversión.
+Incluye una interfaz gráfica moderna con tarjetas, sistema de drag & drop, validación por tipo de archivo y barra de progreso durante conversiones masivas.
 
-## Características
+## Herramientas Incluidas
 
-- Conversión por módulos: `Imagen`, `Audio` y `Video`.
-- Arrastrar y soltar con validación de formato por sección.
-- Conversión individual y por carpeta (lotes).
-- Indicador visual de progreso:
-  - archivo único: progreso indeterminado (animación),
-  - lote: progreso real por cantidad de archivos.
-- Salida automática en carpeta `destino/`.
-- Interfaz moderna en PyQt6.
+El Hub principal cuenta con las siguientes micro-aplicaciones integradas:
 
-## Formatos soportados
+### 1. Multimedia Converter
+- **Audio:** Conversión entre múltiples formatos (`mp3`, `wav`, `flac`, `ogg`, `m4a`).
+- **Video:** Conversión de video sin marca de agua (`mp4`, `mkv`, `avi`, `mov`, `webm`).
+- **Imágenes:** Conversión de formato para imágenes estándar.
+- **Reescalador:** Redimensiona imágenes usando píxeles exactos o porcentajes, manteniendo la relación de aspecto y evitando agrandamientos forzados.
 
-### Imágenes
-- Entrada: `png`, `jpg`, `jpeg`, `bmp`, `webp`
-- Salida: `png`, `jpg`, `webp`
+### 2. Document Converter
+- **Office a PDF:** Convierte archivos de Word (`docx`) a PDF manteniendo el formato original (requiere MS Word instalado).
+- **PDF a Word:** Extrae texto y formato de documentos PDF y los guarda en `.docx`.
+- Soporte para procesamiento por lotes.
 
-### Audio
-- Entrada: `mp3`, `wav`, `flac`, `ogg`, `m4a` (y `mpeg` en selección)
-- Salida: `mp3`, `wav`, `flac`, `ogg`, `m4a`
+### 3. Background Eraser (IA)
+- Utiliza la librería `rembg` para **eliminar fondos automáticamente**.
+- Recorta sujetos y objetos principales sin intervención humana.
+- Resultado siempre en formato `.png` para conservar la transparencia.
 
-### Video
-- Entrada: `mp4`, `mkv`, `avi`, `mov`, `webm`
-- Salida: `mp4`, `mkv`, `avi`, `mov`, `webm`
+### 4. Quality Enhancer (IA - Real-ESRGAN)
+- Herramienta de super resolución que utiliza el potente motor **Real-ESRGAN (Vulkan/NCNN)**.
+- Mejora la calidad de la imagen por 4x recuperando píxeles perdidos y eliminando artefactos (efecto Remini).
+- *El modelo de 25MB se descarga de forma automática en el primer uso.*
 
 ## Requisitos
 
 - Python 3.11+ (recomendado)
 - Dependencias de `requirements.txt`
 - **FFmpeg** (obligatorio para audio/video)
+- Microsoft Office (opcional, recomendado para conversiones precisas de Docx a PDF)
 
 ## Instalación
 
@@ -71,143 +71,10 @@ setx FFMPEG_PATH "C:\ruta\a\ffmpeg.exe"
 python main.py
 ```
 
-## Estructura del proyecto
-
-```text
-Convertidor/
-├─ main.py
-├─ requirements.txt
-├─ src/
-│  ├─ converters/
-│  │  └─ conversion.py
-│  └─ ui/
-│     ├─ index.py
-│     ├─ images_converter.py
-│     ├─ audio_converter.py
-│     ├─ video_converter.py
-│     └─ ui_theme.py
-├─ assets/
-│  └─ icons/
-└─ destino/              # se crea automáticamente al convertir
-```
-
-## Notas
-
-- El módulo de imágenes usa `Pillow`.
-- Los módulos de audio y video usan `ffmpeg`.
-- Si arrastras un archivo de tipo incorrecto, la app muestra advertencia y lo rechaza.
-
 ## Troubleshooting rápido
 
 - **“ffmpeg no está disponible”**  
-  Instala FFmpeg o configura `FFMPEG_PATH`.
+  Asegúrate de haber instalado FFmpeg o configura la variable de entorno `FFMPEG_PATH`.
 
-- **El archivo convertido no se reproduce**  
-  Prueba con formatos estándar (`mp3`, `wav`, `mp4`) y vuelve a convertir desde el archivo original.
-=======
-
-Aplicación de escritorio hecha en Python para convertir **imágenes**, **audio** y **video** sin depender de páginas con anuncios.
-
-Incluye interfaz gráfica con drag & drop, selección de archivo/carpeta, validación por tipo de archivo y barra de progreso durante la conversión.
-
-## Características
-
-- Conversión por módulos: `Imagen`, `Audio` y `Video`.
-- Arrastrar y soltar con validación de formato por sección.
-- Conversión individual y por carpeta (lotes).
-- Indicador visual de progreso:
-  - archivo único: progreso indeterminado (animación),
-  - lote: progreso real por cantidad de archivos.
-- Salida automática en carpeta `destino/`.
-- Interfaz moderna en PyQt6.
-
-## Formatos soportados
-
-### Imágenes
-- Entrada: `png`, `jpg`, `jpeg`, `bmp`, `webp`
-- Salida: `png`, `jpg`, `webp`
-
-### Audio
-- Entrada: `mp3`, `wav`, `flac`, `ogg`, `m4a` (y `mpeg` en selección)
-- Salida: `mp3`, `wav`, `flac`, `ogg`, `m4a`
-
-### Video
-- Entrada: `mp4`, `mkv`, `avi`, `mov`, `webm`
-- Salida: `mp4`, `mkv`, `avi`, `mov`, `webm`
-
-## Requisitos
-
-- Python 3.11+ (recomendado)
-- Dependencias de `requirements.txt`
-- **FFmpeg** (obligatorio para audio/video)
-
-## Instalación
-
-1) Clona o descarga el proyecto.
-
-2) Crea y activa entorno virtual:
-
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-3) Instala dependencias:
-
-```powershell
-pip install -r requirements.txt
-```
-
-4) Instala FFmpeg (Windows recomendado):
-
-```powershell
-winget install "FFmpeg (Essentials Build)"
-```
-
-Si no queda en `PATH`, define la variable:
-
-```powershell
-setx FFMPEG_PATH "C:\ruta\a\ffmpeg.exe"
-```
-
-## Ejecución
-
-```powershell
-python main.py
-```
-
-## Estructura del proyecto
-
-```text
-Convertidor/
-├─ main.py
-├─ requirements.txt
-├─ src/
-│  ├─ converters/
-│  │  └─ conversion.py
-│  └─ ui/
-│     ├─ index.py
-│     ├─ images_converter.py
-│     ├─ audio_converter.py
-│     ├─ video_converter.py
-│     └─ ui_theme.py
-├─ assets/
-│  └─ icons/
-└─ destino/              # se crea automáticamente al convertir
-```
-
-## Notas
-
-- El módulo de imágenes usa `Pillow`.
-- Los módulos de audio y video usan `ffmpeg`.
-- Si arrastras un archivo de tipo incorrecto, la app muestra advertencia y lo rechaza.
-
-## Troubleshooting rápido
-
-- **“ffmpeg no está disponible”**  
-  Instala FFmpeg o configura `FFMPEG_PATH`.
-
-- **El archivo convertido no se reproduce**  
-  Prueba con formatos estándar (`mp3`, `wav`, `mp4`) y vuelve a convertir desde el archivo original.
-
->>>>>>> b8c0e45fb896732b9024c04aa25da3e10473c5bd
+- **Demora excesiva en Background Eraser o Quality Enhancer**  
+  La primera vez que uses estas herramientas, el sistema descargará los modelos de IA automáticamente (aproximadamente 25MB y 170MB). Después de la primera vez será mucho más rápido.
