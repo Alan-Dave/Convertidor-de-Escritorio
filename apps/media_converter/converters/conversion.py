@@ -397,7 +397,7 @@ class AudioFormats:
 
 
 class VideoFormats:
-    formatos_video = ['mp4', 'mkv', 'avi', 'mov', 'webm', 'flv', 'wmv', 'm4v', '3gp', 'mpeg']
+    formatos_video = ['mp4', 'mkv', 'avi', 'mov', 'webm', 'flv', 'wmv', 'm4v', '3gp', 'mpeg', 'mp3']
 
     @staticmethod
     def _run_ffmpeg(ruta_origen, ruta_destino, extra_args=None):
@@ -434,6 +434,9 @@ class VideoFormats:
             return ['-c:v', 'flv', '-c:a', 'libmp3lame', '-b:a', '128k']
         if fmt == '3gp':
             return ['-c:v', 'h263', '-c:a', 'aac', '-b:a', '96k']
+        if fmt == 'mp3':
+            # Extraer solo el audio en mp3 (descartar video)
+            return ['-vn', '-c:a', 'libmp3lame', '-b:a', '192k']
         return ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k']
 
     @staticmethod

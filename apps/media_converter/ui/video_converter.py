@@ -21,6 +21,7 @@ from apps.media_converter.ui.ui_theme import (
 )
 
 VIDEO_FORMATS = ["mp4", "mkv", "avi", "mov", "webm"]
+AUDIO_EXTRACT_FORMATS = ["mp3", "wav", "flac", "ogg", "m4a"]
 
 
 class FileDropLabel(QLabel):
@@ -38,8 +39,11 @@ class FileDropLabel(QLabel):
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
-            file_path = event.mimeData().urls()[0].toLocalFile().lower()
-            if file_path.endswith(self.allowed_extensions):
+            valid = any(
+                url.toLocalFile().lower().endswith(self.allowed_extensions)
+                for url in event.mimeData().urls()
+            )
+            if valid:
                 event.acceptProposedAction()
             else:
                 event.ignore()
@@ -48,16 +52,19 @@ class FileDropLabel(QLabel):
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
-            file_path = event.mimeData().urls()[0].toLocalFile()
-            if file_path.lower().endswith(self.allowed_extensions):
-                self.file_path = file_path
-                self.setText(os.path.basename(file_path))
-                self.on_file_dropped(file_path)
-            else:
+            valid_files = [
+                url.toLocalFile()
+                for url in event.mimeData().urls()
+                if url.toLocalFile().lower().endswith(self.allowed_extensions)
+            ]
+            invalid_count = len(event.mimeData().urls()) - len(valid_files)
+            if valid_files:
+                self.on_file_dropped(valid_files)
+            if invalid_count > 0:
                 QMessageBox.warning(
                     self,
                     "Formato no soportado",
-                    f"Este archivo no es compatible con el convertidor de {self.section_name}.",
+                    f"{invalid_count} archivo(s) no son compatibles con el convertidor de {self.section_name} y fueron ignorados.",
                 )
         else:
             event.ignore()
@@ -109,18 +116,52 @@ class VideoConverter(QWidget):
         )
         card_layout.addWidget(self.file_label)
 
-        combo_layout = QHBoxLayout()
+        # ── Formato de origen ──
+        from_row = QHBoxLayout()
+        from_lbl = QLabel("Formato de origen:")
         self.from_combo = QComboBox()
         self.from_combo.addItems(VIDEO_FORMATS)
         self.from_combo.setEnabled(False)
-        combo_layout.addWidget(QLabel("Formato de origen:"))
-        combo_layout.addWidget(self.from_combo)
+        self.from_combo.setStyleSheet(COMBO_STYLE)
+        from_lbl.setStyleSheet(f"color: {APP_COLORS['text_muted']};")
+        from_row.addWidget(from_lbl)
+        from_row.addWidget(self.from_combo)
+        from_row.addStretch()
+        card_layout.addLayout(from_row)
 
+        # ── Toggle: tipo de salida ──
+        toggle_row = QHBoxLayout()
+        dest_type_lbl = QLabel("Convertir a:")
+        dest_type_lbl.setStyleSheet(f"color: {APP_COLORS['text_muted']};")
+        toggle_row.addWidget(dest_type_lbl)
+        toggle_row.addSpacing(10)
+
+        self.btn_dest_video = QPushButton("\U0001f3ac  Video")
+        self.btn_dest_video.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_dest_video.setFixedHeight(32)
+        self.btn_dest_video.clicked.connect(lambda: self._set_dest_type("video"))
+
+        self.btn_dest_audio = QPushButton("\U0001f3b5  Audio")
+        self.btn_dest_audio.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_dest_audio.setFixedHeight(32)
+        self.btn_dest_audio.clicked.connect(lambda: self._set_dest_type("audio"))
+
+        toggle_row.addWidget(self.btn_dest_video)
+        toggle_row.addWidget(self.btn_dest_audio)
+        toggle_row.addStretch()
+        card_layout.addLayout(toggle_row)
+
+        # ── Formato de destino ──
+        to_row = QHBoxLayout()
+        self.to_lbl = QLabel("Formato de video:")
         self.to_combo = QComboBox()
         self.to_combo.addItems(VIDEO_FORMATS)
-        combo_layout.addWidget(QLabel("Formato de destino:"))
-        combo_layout.addWidget(self.to_combo)
-        card_layout.addLayout(combo_layout)
+        self.to_combo.setStyleSheet(COMBO_STYLE)
+        self.to_lbl.setStyleSheet(f"color: {APP_COLORS['text_muted']};")
+        to_row.addWidget(self.to_lbl)
+        to_row.addWidget(self.to_combo)
+        to_row.addStretch()
+        card_layout.addLayout(to_row)
 
         self.select_button = QPushButton("Seleccionar Archivo")
         self.select_button.clicked.connect(self.select_file)
@@ -132,7 +173,7 @@ class VideoConverter(QWidget):
         self.select_folder_button.setStyleSheet(BUTTON_STYLE)
         card_layout.addWidget(self.select_folder_button)
 
-        self.remove_button = QPushButton("Quitar Archivo")
+        self.remove_button = QPushButton("Quitar todo")
         self.remove_button.clicked.connect(self.remove_file)
         self.remove_button.setEnabled(False)
         self.remove_button.setStyleSheet(REMOVE_BUTTON_STYLE)
@@ -146,18 +187,16 @@ class VideoConverter(QWidget):
 
         self.from_combo.setStyleSheet(COMBO_STYLE)
         self.to_combo.setStyleSheet(COMBO_STYLE)
-        for i in range(combo_layout.count()):
-            widget = combo_layout.itemAt(i).widget()
-            if isinstance(widget, QLabel):
-                widget.setStyleSheet(f"color: {APP_COLORS['text_muted']};")
 
         self.layout.addWidget(card)
         self.setLayout(self.layout)
         self.file_path = None
         self.batch_files = []
+        self._dest_type = "video"
+        self._update_dest_toggle_styles()
 
     def open_batch_manager(self):
-        if len(self.batch_files) > 1:
+        if self.batch_files:
             from core.ui.batch_dialog import BatchDialog
             from PyQt6.QtWidgets import QDialog
             dialog = BatchDialog(self.batch_files, self)
@@ -165,43 +204,78 @@ class VideoConverter(QWidget):
                 self.batch_files = dialog.get_files()
                 if len(self.batch_files) == 0:
                     self.remove_file()
+                elif len(self.batch_files) == 1:
+                    self.file_label.setText(os.path.basename(self.batch_files[0]))
                 else:
                     self.file_label.setText(f"{len(self.batch_files)} videos seleccionados")
-        elif len(self.batch_files) == 1 or self.file_path:
-            pass
 
     def select_file(self):
         file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Seleccionar Archivo de Video", "", "Video (*.mp4 *.mkv *.avi *.mov *.webm)")
-        if file_path:
-            self.batch_files = []
-            self.file_path = file_path
-            self.file_label.setText(os.path.basename(file_path))
-            ext = os.path.splitext(file_path)[1].lstrip('.').lower()
+        file_paths, _ = file_dialog.getOpenFileNames(self, "Seleccionar Archivos de Video", "", "Video (*.mp4 *.mkv *.avi *.mov *.webm)")
+        if file_paths:
+            self.file_path = None
+            for fp in file_paths:
+                if fp not in self.batch_files:
+                    self.batch_files.append(fp)
+            self._refresh_label_and_combos()
+
+    def on_file_dropped(self, file_paths):
+        self.file_path = None
+        for fp in file_paths:
+            if fp not in self.batch_files:
+                self.batch_files.append(fp)
+        self._refresh_label_and_combos()
+
+    def _set_dest_type(self, t: str):
+        self._dest_type = t
+        self._update_dest_toggle_styles()
+        # Repoblar to_combo según tipo
+        self.to_combo.clear()
+        if t == "video":
+            self.to_lbl.setText("Formato de video:")
+            src_ext = self.from_combo.currentText()
+            formats = [f for f in VIDEO_FORMATS if f != src_ext]
+            self.to_combo.addItems(formats if formats else VIDEO_FORMATS)
+        else:
+            self.to_lbl.setText("Formato de audio:")
+            self.to_combo.addItems(AUDIO_EXTRACT_FORMATS)
+
+    def _update_dest_toggle_styles(self):
+        _ACTIVE = (
+            "QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,"
+            "from:#6c63ff,to:#a78bfa); color:white; border-radius:6px; "
+            "padding:4px 16px; font-weight:bold; border:none; }"
+        )
+        _INACTIVE = (
+            f"QPushButton {{ background-color:#2b2b3b; color:{APP_COLORS['text_muted']}; "
+            "border-radius:6px; padding:4px 16px; border:2px solid #3a3a52; }} "
+            "QPushButton:hover { background-color:#35354a; color:white; }"
+        )
+        if self._dest_type == "video":
+            self.btn_dest_video.setStyleSheet(_ACTIVE)
+            self.btn_dest_audio.setStyleSheet(_INACTIVE)
+        else:
+            self.btn_dest_video.setStyleSheet(_INACTIVE)
+            self.btn_dest_audio.setStyleSheet(_ACTIVE)
+
+    def _refresh_label_and_combos(self):
+        if not self.batch_files:
+            return
+        if len(self.batch_files) == 1:
+            self.file_label.setText(os.path.basename(self.batch_files[0]))
+            ext = os.path.splitext(self.batch_files[0])[1].lstrip('.').lower()
             if ext in VIDEO_FORMATS:
                 idx = self.from_combo.findText(ext)
                 if idx != -1:
                     self.from_combo.setCurrentIndex(idx)
                 self.from_combo.setEnabled(False)
-                dests = [f for f in VIDEO_FORMATS if f != ext]
-                self.to_combo.clear()
-                self.to_combo.addItems(dests)
-            self.convert_button.setEnabled(True)
-            self.remove_button.setEnabled(True)
-
-    def on_file_dropped(self, file_path):
-        self.batch_files = []
-        self.file_path = file_path
-        self.file_label.setText(os.path.basename(file_path))
-        ext = os.path.splitext(file_path)[1].lstrip('.').lower()
-        if ext in VIDEO_FORMATS:
-            idx = self.from_combo.findText(ext)
-            if idx != -1:
-                self.from_combo.setCurrentIndex(idx)
-            self.from_combo.setEnabled(False)
-            dests = [f for f in VIDEO_FORMATS if f != ext]
-            self.to_combo.clear()
-            self.to_combo.addItems(dests)
+                # Actualizar to_combo respetando _dest_type
+                self._set_dest_type(self._dest_type)
+        else:
+            self.file_label.setText(f"{len(self.batch_files)} videos seleccionados")
+            self.from_combo.clear()
+            self.from_combo.addItem("varios")
+            self._set_dest_type(self._dest_type)
         self.convert_button.setEnabled(True)
         self.remove_button.setEnabled(True)
 
@@ -210,24 +284,16 @@ class VideoConverter(QWidget):
         if not folder_path:
             return
         valid_exts = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
-        files = []
+        self.file_path = None
         for name in os.listdir(folder_path):
             file_path = os.path.join(folder_path, name)
-            if os.path.isfile(file_path):
-                if os.path.splitext(name)[1].lower() in valid_exts:
-                    files.append(file_path)
-        if not files:
+            if os.path.isfile(file_path) and os.path.splitext(name)[1].lower() in valid_exts:
+                if file_path not in self.batch_files:
+                    self.batch_files.append(file_path)
+        if not self.batch_files:
             QMessageBox.warning(self, "Sin archivos", "No se encontraron videos compatibles en la carpeta.")
             return
-        self.file_path = None
-        self.batch_files = files
-        self.file_label.setText(f"{len(files)} videos seleccionados")
-        self.from_combo.clear()
-        self.from_combo.addItem("varios")
-        self.to_combo.clear()
-        self.to_combo.addItems(VIDEO_FORMATS)
-        self.convert_button.setEnabled(True)
-        self.remove_button.setEnabled(True)
+        self._refresh_label_and_combos()
 
     def remove_file(self):
         self.file_path = None
@@ -239,6 +305,9 @@ class VideoConverter(QWidget):
         self.from_combo.addItems(VIDEO_FORMATS)
         self.from_combo.setCurrentIndex(0)
         self.from_combo.setEnabled(False)
+        self._dest_type = "video"
+        self._update_dest_toggle_styles()
+        self.to_lbl.setText("Formato de video:")
         self.to_combo.clear()
         self.to_combo.addItems(VIDEO_FORMATS)
 

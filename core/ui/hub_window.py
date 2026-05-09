@@ -162,6 +162,17 @@ class HubWindow(QMainWindow):
         self.bg_card.action_btn.clicked.connect(self.launch_bg_remover)
         grid_layout.addWidget(self.bg_card, 1, 1)
         
+        # 5. Link Converter
+        self.link_card = AppCard(
+            title="LINK\nCONVERTER",
+            subtitle="YouTube, TikTok, Instagram & more",
+            icon_file="link_converter.webp",
+            btn_text=" ABRIR",
+            btn_type="open"
+        )
+        self.link_card.action_btn.clicked.connect(self.launch_link_converter)
+        grid_layout.addWidget(self.link_card, 2, 0)
+
         main_layout.addLayout(grid_layout)
         
     def launch_media_converter(self):
@@ -181,6 +192,12 @@ class HubWindow(QMainWindow):
         from apps.media_converter.ui.quality_enhancer import QualityEnhancerUI
         self.quality_window = QualityEnhancerUI()
         self.quality_window.show()
+        self.close()
+
+    def launch_link_converter(self):
+        from apps.link_converter.link_converter_window import LinkConverterWindow
+        self.link_window = LinkConverterWindow()
+        self.link_window.show()
         self.close()
 
     def launch_bg_remover(self):

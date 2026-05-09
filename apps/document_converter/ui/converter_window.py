@@ -33,8 +33,11 @@ class FileDropLabel(QLabel):
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls() and len(event.mimeData().urls()) > 0:
-            file_path = event.mimeData().urls()[0].toLocalFile().lower()
-            if file_path.endswith(self.allowed_extensions):
+            valid = any(
+                url.toLocalFile().lower().endswith(self.allowed_extensions)
+                for url in event.mimeData().urls()
+            )
+            if valid:
                 event.acceptProposedAction()
             else:
                 event.ignore()
@@ -43,16 +46,19 @@ class FileDropLabel(QLabel):
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
-            file_path = event.mimeData().urls()[0].toLocalFile()
-            if file_path.lower().endswith(self.allowed_extensions):
-                self.file_path = file_path
-                self.setText(os.path.basename(file_path))
-                self.on_file_dropped(file_path)
-            else:
+            valid_files = [
+                url.toLocalFile()
+                for url in event.mimeData().urls()
+                if url.toLocalFile().lower().endswith(self.allowed_extensions)
+            ]
+            invalid_count = len(event.mimeData().urls()) - len(valid_files)
+            if valid_files:
+                self.on_file_dropped(valid_files)
+            if invalid_count > 0:
                 QMessageBox.warning(
                     self,
                     "Formato no soportado",
-                    "Este archivo no es compatible con este tipo de conversión.",
+                    f"{invalid_count} archivo(s) no son compatibles con este tipo de conversión y fueron ignorados.",
                 )
         else:
             event.ignore()
@@ -172,7 +178,7 @@ class DocumentConverterWindow(QWidget):
         self.select_folder_button.setStyleSheet(BUTTON_STYLE)
         card_layout.addWidget(self.select_folder_button)
 
-        self.remove_button = QPushButton("Quitar Archivo")
+        self.remove_button = QPushButton("Quitar todo")
         self.remove_button.clicked.connect(self.remove_file)
         self.remove_button.setEnabled(False)
         self.remove_button.setStyleSheet(REMOVE_BUTTON_STYLE)
@@ -190,7 +196,7 @@ class DocumentConverterWindow(QWidget):
         self.batch_files = []
 
     def open_batch_manager(self):
-        if len(self.batch_files) > 1:
+        if self.batch_files:
             from core.ui.batch_dialog import BatchDialog
             from PyQt6.QtWidgets import QDialog
             dialog = BatchDialog(self.batch_files, self)
@@ -198,26 +204,36 @@ class DocumentConverterWindow(QWidget):
                 self.batch_files = dialog.get_files()
                 if len(self.batch_files) == 0:
                     self.remove_file()
+                elif len(self.batch_files) == 1:
+                    self.file_label.setText(os.path.basename(self.batch_files[0]))
                 else:
                     self.file_label.setText(f"{len(self.batch_files)} archivos seleccionados")
-        elif len(self.batch_files) == 1 or self.file_path:
-            pass
 
     def select_file(self):
         file_dialog = QFileDialog()
         filter_str = f"Archivos (*.{self.from_ext})"
-        file_path, _ = file_dialog.getOpenFileName(self, "Seleccionar Archivo", "", filter_str)
-        if file_path:
-            self.batch_files = []
-            self.file_path = file_path
-            self.file_label.setText(os.path.basename(file_path))
-            self.convert_button.setEnabled(True)
-            self.remove_button.setEnabled(True)
+        file_paths, _ = file_dialog.getOpenFileNames(self, "Seleccionar Archivos", "", filter_str)
+        if file_paths:
+            self.file_path = None
+            for fp in file_paths:
+                if fp not in self.batch_files:
+                    self.batch_files.append(fp)
+            self._refresh_label()
 
-    def on_file_dropped(self, file_path):
-        self.batch_files = []
-        self.file_path = file_path
-        self.file_label.setText(os.path.basename(file_path))
+    def on_file_dropped(self, file_paths):
+        self.file_path = None
+        for fp in file_paths:
+            if fp not in self.batch_files:
+                self.batch_files.append(fp)
+        self._refresh_label()
+
+    def _refresh_label(self):
+        if not self.batch_files:
+            return
+        if len(self.batch_files) == 1:
+            self.file_label.setText(os.path.basename(self.batch_files[0]))
+        else:
+            self.file_label.setText(f"{len(self.batch_files)} archivos seleccionados")
         self.convert_button.setEnabled(True)
         self.remove_button.setEnabled(True)
 
@@ -226,20 +242,16 @@ class DocumentConverterWindow(QWidget):
         if not folder_path:
             return
         valid_ext = f".{self.from_ext}"
-        files = []
+        self.file_path = None
         for name in os.listdir(folder_path):
             file_path = os.path.join(folder_path, name)
-            if os.path.isfile(file_path):
-                if os.path.splitext(name)[1].lower() == valid_ext:
-                    files.append(file_path)
-        if not files:
+            if os.path.isfile(file_path) and os.path.splitext(name)[1].lower() == valid_ext:
+                if file_path not in self.batch_files:
+                    self.batch_files.append(file_path)
+        if not self.batch_files:
             QMessageBox.warning(self, "Sin archivos", f"No se encontraron archivos {valid_ext} en la carpeta.")
             return
-        self.file_path = None
-        self.batch_files = files
-        self.file_label.setText(f"{len(files)} archivos seleccionados")
-        self.convert_button.setEnabled(True)
-        self.remove_button.setEnabled(True)
+        self._refresh_label()
 
     def remove_file(self):
         self.file_path = None

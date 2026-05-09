@@ -1,80 +1,77 @@
-# Media Hub (Versión 1.1)
+# Media Hub (Versión 1.2)
 
-Aplicación de escritorio modular hecha en Python (PyQt6) para agrupar múltiples herramientas de conversión y edición impulsadas por Inteligencia Artificial, sin depender de páginas con anuncios.
+Aplicación de escritorio modular hecha en Python (PyQt6) que agrupa múltiples herramientas de conversión y edición impulsadas por Inteligencia Artificial y utilidades multimedia avanzadas. Diseñada para ser rápida, privada (todo el procesamiento es local) y libre de anuncios.
 
-Incluye una interfaz gráfica moderna con tarjetas, sistema de drag & drop, validación por tipo de archivo y barra de progreso durante conversiones masivas.
-
-## Herramientas Incluidas
-
-El Hub principal cuenta con las siguientes micro-aplicaciones integradas:
+## 🚀 Herramientas Incluidas
 
 ### 1. Multimedia Converter
-- **Audio:** Conversión entre múltiples formatos (`mp3`, `wav`, `flac`, `ogg`, `m4a`).
-- **Video:** Conversión de video sin marca de agua (`mp4`, `mkv`, `avi`, `mov`, `webm`).
-- **Imágenes:** Conversión de formato para imágenes estándar.
-- **Reescalador:** Redimensiona imágenes usando píxeles exactos o porcentajes, manteniendo la relación de aspecto y evitando agrandamientos forzados.
+- **Audio:** Conversión profesional entre formatos `mp3`, `wav`, `flac`, `ogg`, `m4a`.
+- **Video:** Conversión de video de alta calidad (`mp4`, `mkv`, `avi`, `mov`, `webm`). 
+- **Extracción de Audio:** Permite convertir videos directamente a **MP3**.
+- **Imágenes:** Conversión masiva de formatos de imagen.
+- **Reescalador:** Redimensiona imágenes por píxeles o porcentaje manteniendo la relación de aspecto y calidad.
 
-### 2. Document Converter
-- **Office a PDF:** Convierte archivos de Word (`docx`) a PDF manteniendo el formato original (requiere MS Word instalado).
-- **PDF a Word:** Extrae texto y formato de documentos PDF y los guarda en `.docx`.
-- Soporte para procesamiento por lotes.
+### 2. Link Converter (Downloader Inteligente)
+- **Multi-plataforma:** Descarga contenido de YouTube, TikTok, Instagram, Twitter (X), Facebook y cientos de sitios más.
+- **Detección Automática:** El sistema identifica la plataforma al pegar el enlace.
+- **Opciones de Descarga:** Elige entre descargar el video completo (MP4) o solo el audio (MP3).
+- **Potencia:** Basado en `yt-dlp` para garantizar descargas rápidas y estables.
 
-### 3. Background Eraser (IA)
-- Utiliza la librería `rembg` para **eliminar fondos automáticamente**.
-- Recorta sujetos y objetos principales sin intervención humana.
-- Resultado siempre en formato `.png` para conservar la transparencia.
+### 3. Document Converter
+- **Office a PDF:** Convierte documentos de Word (`docx`) a PDF con alta fidelidad (requiere MS Word).
+- **PDF a Word:** Convierte archivos PDF a documentos editables de Word (`docx`).
+- **Procesamiento por Lotes:** Convierte múltiples documentos simultáneamente.
 
-### 4. Quality Enhancer (IA - Real-ESRGAN)
-- Herramienta de super resolución que utiliza el potente motor **Real-ESRGAN (Vulkan/NCNN)**.
-- Mejora la calidad de la imagen por 4x recuperando píxeles perdidos y eliminando artefactos (efecto Remini).
-- *El modelo de 25MB se descarga de forma automática en el primer uso.*
+### 4. Background Eraser (IA)
+- Eliminación de fondos impulsada por Inteligencia Artificial (`rembg`).
+- Procesa sujetos y objetos complejos con un solo clic.
+- Salida automática en `.png` con transparencia optimizada.
 
-## Requisitos
+### 5. Quality Enhancer (IA - Real-ESRGAN)
+- **Súper Resolución:** Aumenta el tamaño de tus imágenes x4 sin perder nitidez.
+- **Restauración:** Elimina el ruido y los artefactos de compresión (ideal para fotos antiguas o de baja resolución).
+- Utiliza el motor **Real-ESRGAN** para resultados de grado profesional.
 
-- Python 3.11+ (recomendado)
-- Dependencias de `requirements.txt`
-- **FFmpeg** (obligatorio para audio/video)
-- Microsoft Office (opcional, recomendado para conversiones precisas de Docx a PDF)
+## 🛠️ Requisitos Técnicos
 
-## Instalación
+- **Python 3.11+**
+- **FFmpeg:** Esencial para todas las tareas de audio y video.
+- **Microsoft Word:** Necesario para la conversión nativa de Word a PDF.
+- **Conexión a Internet:** Solo necesaria la primera vez para descargar los modelos de IA y para el Link Converter.
 
-1) Clona o descarga el proyecto.
+## 📦 Instalación
 
-2) Crea y activa entorno virtual:
+1. **Clonar el repositorio:**
+   ```powershell
+   git clone https://github.com/tu-usuario/media-hub.git
+   cd media-hub
+   ```
 
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
+2. **Crear y activar entorno virtual:**
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
 
-3) Instala dependencias:
+3. **Instalar dependencias:**
+   ```powershell
+   pip install -r requirements.txt
+   ```
 
-```powershell
-pip install -r requirements.txt
-```
+4. **Instalar FFmpeg (Recomendado en Windows):**
+   ```powershell
+   winget install "FFmpeg (Essentials Build)"
+   ```
 
-4) Instala FFmpeg (Windows recomendado):
+## 🎮 Ejecución
 
-```powershell
-winget install "FFmpeg (Essentials Build)"
-```
-
-Si no queda en `PATH`, define la variable:
-
-```powershell
-setx FFMPEG_PATH "C:\ruta\a\ffmpeg.exe"
-```
-
-## Ejecución
-
+Para iniciar el Hub principal:
 ```powershell
 python main.py
 ```
 
-## Troubleshooting rápido
+## 💡 Notas Adicionales
 
-- **“ffmpeg no está disponible”**  
-  Asegúrate de haber instalado FFmpeg o configura la variable de entorno `FFMPEG_PATH`.
-
-- **Demora excesiva en Background Eraser o Quality Enhancer**  
-  La primera vez que uses estas herramientas, el sistema descargará los modelos de IA automáticamente (aproximadamente 25MB y 170MB). Después de la primera vez será mucho más rápido.
+- **Modelos de IA:** La primera vez que abras el *Quality Enhancer* o el *Background Eraser*, el sistema descargará automáticamente los modelos (aprox. 180MB). Esto ocurre solo una vez.
+- **Privacidad:** Todo el procesamiento (excepto la descarga de links) se realiza de forma local en tu computadora. Tus archivos nunca suben a la nube.
+- **FFmpeg:** Si el sistema no reconoce FFmpeg, puedes definir la ruta manualmente en las variables de entorno o crear una variable `FFMPEG_PATH`.
