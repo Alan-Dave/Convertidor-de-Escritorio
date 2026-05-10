@@ -1,13 +1,26 @@
+# ── UI Framework ─────────────────────────────────────────────────
 PyQt6==6.11.0
+
+# ── Image Processing ─────────────────────────────────────────────
 pillow==12.2.0
-imageio-ffmpeg==0.6.0
-rembg[cpu]==2.0.75
 opencv-contrib-python==4.13.0.92
-requests==2.33.1
+numpy==2.4.4
+
+# ── AI / Background Removal ──────────────────────────────────────
+rembg[cpu]==2.0.75
+scipy==1.17.1
+
+# ── Video / Audio ────────────────────────────────────────────────
+imageio-ffmpeg==0.6.0
+yt-dlp>=2026.3.17
+
+# ── Document Conversion ──────────────────────────────────────────
 pdf2docx==0.5.13
 docx2pdf==0.1.8
-comtypes==1.4.10
+
+# ── Windows Utilities ────────────────────────────────────────────
+comtypes==1.4.16
 pywin32==311
-numpy==2.4.4
-scipy==1.17.1
-yt-dlp>=2026.3.17
+
+# ── Network ──────────────────────────────────────────────────────
+requests==2.33.1
