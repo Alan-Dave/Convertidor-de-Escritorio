@@ -50,3 +50,5 @@ tmp_test/
 *.spec
 *.exe
 /Instalador/
+
+/Output/

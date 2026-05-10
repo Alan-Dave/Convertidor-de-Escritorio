@@ -10,6 +10,7 @@ from apps.media_converter.ui.audio_converter import AudioConverter
 from apps.media_converter.ui.video_converter import VideoConverter
 from apps.media_converter.ui.images_converter import ImageConverter
 from apps.media_converter.ui.image_rescaler import ImageRescaler
+from apps.media_converter.ui.audio_cut import AudioCutUI
 from apps.media_converter.ui.ui_theme import (
     get_app_colors,
     get_soft_button_style,
@@ -71,6 +72,7 @@ class LauncherWindow(QWidget):
         icons_layout.addLayout(make_block('AudioIcon.png', 'Audio', self.open_audio_converter))
         icons_layout.addLayout(make_block('VideoIcon.png', 'Video', self.open_video_converter))
         icons_layout.addLayout(make_block('Upscaler.png', 'Reescalar', self.open_image_rescaler))
+        icons_layout.addLayout(make_block('AudioIcon.png', 'Cortar Audio', self.open_audio_cut))
 
         layout.addLayout(icons_layout)
 
@@ -101,6 +103,15 @@ class LauncherWindow(QWidget):
         self.audio_window = None
         self.video_window = None
         self.rescaler_window = None
+        self.audiocut_window = None
+
+    def open_audio_cut(self):
+        try:
+            self.audiocut_window = AudioCutUI()
+            self.audiocut_window.show()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo abrir el cortador de audio:\n{e}")
 
     def open_image_rescaler(self):
         try:

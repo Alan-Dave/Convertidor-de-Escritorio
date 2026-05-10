@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap, QIcon, QColor
 from PyQt6.QtCore import Qt, QSize
 from core.theme_manager import ThemeManager
+from core.updater import CheckUpdateThread, UpdateDialog
 
 
 def get_asset_path(filename):
@@ -118,6 +119,15 @@ class HubWindow(QMainWindow):
         self._tm = ThemeManager.instance()
         self.init_ui()
         self._apply_theme()
+        
+        # Start update check in background
+        self.update_thread = CheckUpdateThread(self)
+        self.update_thread.update_available.connect(self.show_update_dialog)
+        self.update_thread.start()
+
+    def show_update_dialog(self, version, description, download_url, size_mb):
+        dialog = UpdateDialog(version, description, download_url, size_mb, self)
+        dialog.exec()
 
     def init_ui(self):
         central_widget = QWidget()
