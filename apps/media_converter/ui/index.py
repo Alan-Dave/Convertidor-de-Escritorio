@@ -58,9 +58,11 @@ class LauncherWindow(QWidget):
         def make_block(icon_filename, label_text, handler):
             v = QVBoxLayout()
             btn = QPushButton()
-            icon_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), '..', '..', '..', 'assets', 'apps', 'media_converter', icon_filename)
-            )
+            import sys
+            if getattr(sys, 'frozen', False):
+                icon_path = os.path.join(sys._MEIPASS, 'assets', 'apps', 'media_converter', icon_filename)
+            else:
+                icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'assets', 'apps', 'media_converter', icon_filename))
             if os.path.exists(icon_path):
                 btn.setIcon(QIcon(icon_path))
             btn.setIconSize(QSize(180, 180))

@@ -58,9 +58,11 @@ class DocumentLauncherWindow(QWidget):
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             
             if icon_name:
-                icon_path = os.path.abspath(os.path.join(
-                    os.path.dirname(__file__), '..', '..', '..', 'assets', 'apps', 'document_converter', icon_name
-                ))
+                import sys
+                if getattr(sys, 'frozen', False):
+                    icon_path = os.path.join(sys._MEIPASS, 'assets', 'apps', 'document_converter', icon_name)
+                else:
+                    icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'assets', 'apps', 'document_converter', icon_name))
                 if os.path.exists(icon_path):
                     btn.setIcon(QIcon(icon_path))
                     btn.setIconSize(QSize(28, 28))

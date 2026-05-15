@@ -165,7 +165,11 @@ FORMATS_IMAGE  = ["jpg", "png", "webp", "gif", "bmp"]
 
 
 def get_icon_path(icon_file: str) -> str:
-    base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    import sys
+    if getattr(sys, 'frozen', False):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     return os.path.join(base, "assets", "apps", "link_converter", icon_file)
 
 
